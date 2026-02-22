@@ -13,20 +13,20 @@
   const resetBtn   = $("resetBtn");
   const showHotBtn = $("showHotBtn");
 
-  // Résistances visibles pour l’élève (étiquettes) + valeurs cachées X,Y,Z
+  // Résistances élèves : étiquette vue par l’élève + texte affiché + valeur réelle cachée
   const RES_CONFIG = [
-    { label: "10 Ω",   value: 10   },
-    { label: "33 Ω",   value: 33   },
-    { label: "47 Ω",   value: 47   },
-    { label: "68 Ω",   value: 68   },
-    { label: "100 Ω",  value: 100  },
-    { label: "220 Ω",  value: 220  },
-    { label: "330 Ω",  value: 330  },
-    { label: "470 Ω",  value: 470  },
-    // valeurs « cachées » pour les élèves
-    { label: "X",      value: 4700 },
-    { label: "Y",      value: 2000 },
-    { label: "Z",      value: 1000 }
+    { label: "10 Ω",  display: "10 Ω",           value: 10   },
+    { label: "33 Ω",  display: "33 Ω",           value: 33   },
+    { label: "47 Ω",  display: "47 Ω",           value: 47   },
+    { label: "68 Ω",  display: "68 Ω",           value: 68   },
+    { label: "100 Ω", display: "100 Ω",          value: 100  },
+    { label: "220 Ω", display: "220 Ω",          value: 220  },
+    { label: "330 Ω", display: "330 Ω",          value: 330  },
+    { label: "470 Ω", display: "470 Ω",          value: 470  },
+    // inconnues : valeurs réelles mais affichage "Résistance X/Y/Z"
+    { label: "X",     display: "Résistance X",   value: 4700 },
+    { label: "Y",     display: "Résistance Y",   value: 2000 },
+    { label: "Z",     display: "Résistance Z",   value: 1000 }
   ];
 
   const clamp = (x,a,b) => Math.max(a, Math.min(b,x));
@@ -35,6 +35,7 @@
   const state = {
     U: parseFloat(uRange.value || "0"),
     R: 100,
+    RDisplay: "100 Ω",
     vMode: "OFF",
     aMode: "OFF",
     showHotspots: false,
@@ -56,7 +57,6 @@
   const imgAuA = new Image();
   imgAuA.src = "amperemetre_microA.png?v=3006";
 
-  // Bbox utiles
   const SRC = {
     volt:{l:3,t:3,r:354,b:673},
     a2a :{l:5,t:10,r:394,b:611},
@@ -82,7 +82,6 @@
     return {x:offX,y:offY,w:fitW,h:fitH};
   }
 
-  // Zones de base
   function hotFromMeterBox(m, kind){
     if(kind==="volt"){
       return {
@@ -137,16 +136,17 @@
     ctx.restore();
   }
 
-  // === Interface ===
+  // === Interface résistances ===
   function buildResButtons(){
     resGrid.innerHTML = "";
     RES_CONFIG.forEach(cfg=>{
       const b = document.createElement("button");
       b.className = "btn";
-      b.textContent = cfg.label;
-      b.dataset.r = String(cfg.value);   // valeur réelle (invisible à l’élève)
+      b.textContent = cfg.label;       // ce que l’élève voit sur le bouton
+      b.dataset.r = String(cfg.value); // valeur réelle cachée
       b.onclick = () => {
-        state.R = cfg.value;
+        state.R       = cfg.value;
+        state.RDisplay= cfg.display;
         setActive(cfg.value);
         sync();
         draw();
@@ -164,7 +164,7 @@
   function sync(){
     state.U = clamp(parseFloat(uRange.value||"0"),0,parseFloat(uRange.max||"12"));
     uTxt.textContent = state.U.toFixed(1);
-    rTxt.textContent = String(state.R);
+    rTxt.textContent = state.RDisplay;
   }
 
   let HOT = null;
@@ -335,6 +335,7 @@
   resetBtn.onclick = () => {
     state.U=3;
     state.R=100;
+    state.RDisplay="100 Ω";
     state.vMode="OFF";
     state.aMode="OFF";
     uRange.value="3";
@@ -350,6 +351,8 @@
 
   // === Init ===
   buildResButtons();
+  // initial affichage cohérent avec R=100
+  state.RDisplay = "100 Ω";
   sync();
   status.textContent = "Départ : OFF. Clique V⎓ puis un calibre A.";
   draw();
