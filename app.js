@@ -13,7 +13,22 @@
   const resetBtn   = $("resetBtn");
   const showHotBtn = $("showHotBtn");
 
-  const RES_VALUES = [10, 33, 47, 68, 100, 220, 330, 470];
+  // Résistances visibles pour l’élève (étiquettes) + valeurs cachées X,Y,Z
+  const RES_CONFIG = [
+    { label: "10 Ω",   value: 10   },
+    { label: "33 Ω",   value: 33   },
+    { label: "47 Ω",   value: 47   },
+    { label: "68 Ω",   value: 68   },
+    { label: "100 Ω",  value: 100  },
+    { label: "220 Ω",  value: 220  },
+    { label: "330 Ω",  value: 330  },
+    { label: "470 Ω",  value: 470  },
+    // valeurs « cachées » pour les élèves
+    { label: "X",      value: 4700 },
+    { label: "Y",      value: 2000 },
+    { label: "Z",      value: 1000 }
+  ];
+
   const clamp = (x,a,b) => Math.max(a, Math.min(b,x));
   const I_phys = (U,R) => (R>0 ? U/R : 0); // A
 
@@ -125,14 +140,14 @@
   // === Interface ===
   function buildResButtons(){
     resGrid.innerHTML = "";
-    RES_VALUES.forEach(r=>{
+    RES_CONFIG.forEach(cfg=>{
       const b = document.createElement("button");
       b.className = "btn";
-      b.textContent = `${r} Ω`;
-      b.dataset.r = String(r);
+      b.textContent = cfg.label;
+      b.dataset.r = String(cfg.value);   // valeur réelle (invisible à l’élève)
       b.onclick = () => {
-        state.R = r;
-        setActive(r);
+        state.R = cfg.value;
+        setActive(cfg.value);
         sync();
         draw();
       };
@@ -140,15 +155,16 @@
     });
     setActive(state.R);
   }
+
   function setActive(R){
     [...resGrid.querySelectorAll("button")]
       .forEach(b => b.classList.toggle("active", Number(b.dataset.r)===R));
   }
+
   function sync(){
     state.U = clamp(parseFloat(uRange.value||"0"),0,parseFloat(uRange.max||"12"));
     uTxt.textContent = state.U.toFixed(1);
     rTxt.textContent = String(state.R);
-    // plus d'affichage iIdeal
   }
 
   let HOT = null;
@@ -291,7 +307,6 @@
       draw(); return;
     }
 
-    // interversion conservée : a_2a → 2A, a_ua → µA
     if(inCircle(x,y,HOT.a_2a.cx,HOT.a_2a.cy,HOT.a_2a.r)){
       state.aMode="2A";
       status.textContent="Ampèremètre : 2A sélectionné.";
